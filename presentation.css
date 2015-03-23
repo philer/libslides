@@ -1,0 +1,405 @@
+@charset "utf-8";
+/**
+ * libslides
+ * Fun slides!
+ * 
+ * @author Philipp Miller
+ */
+
+/*** GENERAL ***/
+
+html,
+body
+{
+  margin: 0;
+  padding: 0;
+  
+  font-size: 1.5vmax;
+  
+  text-align: center;
+  
+  font-family: "Linux Libertine", "Linux Libertine O", serif;
+  background-color: #222;
+  
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+a {
+  text-decoration: none;
+  cursor: pointer;
+  color: blue;
+}
+
+img {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+pre,
+code,
+.code
+{
+  font-family: "Liberation mono", monospace;
+  white-space: pre;
+  font-size: .85em;
+  text-align: left;
+}
+code, .code {
+  background-color: #ddd;
+  padding: 0 .2em;
+  border-radius: .1em;
+}
+.terminal {
+  margin: 0 auto;
+  display: inline-block;
+  background-color: black;
+  color: white;
+  padding: 1em;
+  border-radius: .3em;
+}
+
+/*** LAYOUT ***/
+
+#slides {
+  z-index: 1;
+  position: absolute;
+  /*height: 100%;*/
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: -20px;
+  padding-right: 20px;
+  overflow: auto;
+}
+.slide {
+  position: relative;
+  font-size: 3vh;
+  height: 100vh;
+  width: calc(4/3 * 100vh);
+  margin: 1em auto;
+  box-sizing: border-box;
+  padding: 1em 2em;
+  overflow: auto;
+  
+  background-color: white;
+  box-shadow: 3px 3px 1vmin black;
+}
+.slide:first-of-type { margin-top: .5em; }
+.slide:last-of-type { margin-bottom: .5em; }
+
+/* portrait-ish */
+@media screen and (max-aspect-ratio: 4/3) {
+  #slides > .slide {
+    width: 100vw;
+    height: calc(3/4 * 100vw);
+    font-size: calc(3/4 * 3vw);
+    display: inline-block; /* prevent margin collapse */
+    margin: calc(0.5 * (100vh - 3/4 * 100vw)) 0;
+  }
+}
+
+/* hide in-betweens but keep anchors reachable */
+#slides > :not(.slide) {
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+.hidden,
+.page-anchor
+{
+  position: absolute;
+  top: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+
+/*** PRINT ***/
+
+/* Use 'shrink to fit page' option when printing on paper */
+@media print {
+  @page {
+    margin: 0;
+    padding: 0;
+    size: calc(4/3 * 30in) 30in;
+  }
+  * {
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  html, body, #slides {
+    position: static;
+    height: auto;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    overflow: visible;
+    background: transparent;
+    color: black;
+  }
+  body > :not(#slides),
+  .slide-nav
+  {
+    display: none !important;
+  }
+  .slide {
+    height: 30in;
+    width: calc(4/3 * 30in);
+    font-size: calc(30/100 * 3in);
+    margin: 0;
+    border-width: 0;
+    page-break-inside: avoid;
+    /*page-break-after: always;*/
+  }
+}
+
+/*** NAVIGATION ***/
+
+#presentation-menu {
+  font-size: 3vmin;
+  z-index: 1000;
+  position: fixed;
+  /*right: -33.33%;*/
+  /*max-width: 33.33%;*/
+  right: -50%;
+  max-width: 50%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 2em;
+  
+  overflow: auto;
+  text-align: left;
+  color: white;
+  background-color: black;
+  
+  opacity: 0;
+  visibility: hidden;
+  transition-duration: .2s;
+  transition-property: opacity, visibility, right;
+  /*transition: .2s opacity, .2s visibility;*/
+}
+#presentation-menu.visible {
+  opacity: .8;
+  visibility: visible;
+  left: auto;
+  right: 0;
+}
+#presentation-menu a { color: inherit; }
+#presentation-menu h1 {
+  font-size: 2em;
+}
+
+.slide-nav {
+  position: absolute;
+  font-size: 3vh;
+  top: 1em;
+  right: 1em;
+}
+.slide-nav a,
+.slide-nav .fa
+{
+  display: inline-block;
+  vertical-align: middle;
+  color: black;
+}
+.slide-nav a {
+  opacity: .2;
+  transition: .2s opacity, .2s color;
+}
+.slide-nav:hover a {
+  opacity: .5;
+}
+.slide-nav a:hover {
+  opacity: 1;
+}
+
+#presentation-menu .presentation-menu-toggle {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  color: white;
+  opacity: 1;
+}
+#presentation-menu .toc {
+  display: block;
+}
+
+#scrolltip {
+  z-index: 2000;
+  position: fixed;
+  right: .5em;
+  
+  /*font-size: .8vmax;*/
+  font-size: 16px;
+  margin-top: -1.1em;
+  height: 2.2em;
+  width: 2.2em;
+  line-height: 2.2em;
+  
+  text-align: center;
+  font-weight: bold;
+  color: white;
+  background-color: black;
+  cursor: default;
+  
+  border-radius: 3px;
+  box-shadow: 1px 1px 3px rgba(0,0,0,.66);
+  opacity: 0;
+  transition: .3s opacity;
+}
+#scrolltip.update { opacity: .6; }
+#scrolltip:hover { opacity: .8; }
+#scrolltip:empty { opacity: 0; }
+
+#scrolltip::before {
+  content: "";
+  font-size: .5em;
+  width: 0;
+  height: 0;
+  border: 1em solid transparent;
+  border-left-color: black;
+  position: absolute;
+  top: 50%;
+  margin-top: -1em;
+  right: -2em;
+}
+
+
+/*** CONTENT ***/
+
+.spoiler {
+  position: relative;
+  overflow: hidden;
+  max-height: 100%;
+  transition: .3s max-height;
+  /*border-bottom: 1px solid #ccc;*/
+}
+.spoiler.collapsed {
+  max-height: 1.3em;
+  border-bottom: 1px solid #ccc;
+}
+.spoiler-toggle {
+  color: black;
+  position: absolute;
+  /*left: 0;*/
+  right: .5em;
+  top: 0;
+  opacity: .5;
+  transition: .2s opacity;
+}
+.spoiler-toggle:hover {
+  opacity: 1;
+}
+.spoiler-toggle::before {
+  content: "\f068";
+}
+.collapsed .spoiler-toggle::before {
+  content: "\f067";
+}
+.spoiler-toggle::after {
+  content: "";
+  display: block;
+  width: 100%;
+}
+@media print {
+  .spoiler.collapsed {
+    max-height: 100%;
+    border: 0 transparent;
+  }
+  .spoiler-toggle {
+    display: none;
+  }
+}
+
+
+h1, h2, h3, h4, h5, h6 {
+  font-size: 1em;
+  margin: 1em 0;
+  padding: 0;
+  font-weight: normal;
+  
+}
+
+/* slide heading */
+h1, h2 {
+  font-size: 3.3em;
+  margin: .5em 0 .25em;
+}
+h1:not(.hidden) ~ h2,
+h2:not(.hidden) ~ h2
+{
+  font-size: 1.5em;
+  margin: 1em 0;
+}
+
+
+.slide > ol,
+.slide > ul
+{
+  display: inline-block;
+  text-align: left;
+  padding-left: 0;
+  margin: 0;
+}
+.slide > ol li,
+.slide > ul li
+{
+  margin: .25em 0;
+}
+
+ul {
+  padding-left: 1em;
+  list-style-type: none;
+}
+ul li::before {
+  content: "\27BC";
+  width: 0;
+  display: inline-block;
+  position: relative;
+  left: -1.2em;
+  opacity: .5;
+}
+
+.toc,
+.toc ol {
+  counter-reset: section;
+  list-style-type: none;
+  padding-left: 1em;
+}
+.toc li::before {
+  counter-increment: section;
+  content: counters(section,".") " ";
+}
+
+dt {
+  width: 33%;
+  float: left;
+  box-sizing: border-box;
+  padding: 0 1em;
+  text-align: right;
+  opacity: .5;
+  font-weight: bold;
+}
+dd {
+  margin: .5em 0 .5em 33%;
+  width: 66.9%;
+  text-align: left;
+}
+dd::after {
+  content: "";
+  display: block;
+  width: 100%;
+  clear: both;
+}
+
+figure {
+  margin: .25em;
+}
